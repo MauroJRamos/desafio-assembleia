@@ -1,0 +1,24 @@
+spring:
+  # Testes usam H2 em memoria: isolados, rapidos e sem gerar arquivos em disco.
+  datasource:
+    url: jdbc:h2:mem:assembleia-test;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+
+assembleia:
+  integracao:
+    user-info:
+      fake: true
+
+logging:
+  level:
+    org.hibernate.SQL: WARN

@@ -1,0 +1,44 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Banco H2 em arquivo (gerado em runtime)
+data/
+*.mv.db
+*.trace.db
+
+# IDE - IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IDE - Eclipse / STS
+.settings/
+.project
+.classpath
+.factorypath
+bin/
+
+# IDE - VS Code
+.vscode/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Variaveis de ambiente locais
+.env
+
+# Enunciado do desafio (classificado como "Uso Interno" - nao versionar)
+Desafio java.pdf
+
+# Documento de trabalho pessoal: analise de arquitetura + roadmap interno das etapas.
+# Planejamento e de controle proprio; fica fora do versionamento para que ajustes de arquitetura e roadmap possam ser feitos sem gerar conflitos de merge.
+docs/ANALISE-ARQUITETURA.md

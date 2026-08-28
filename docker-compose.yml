@@ -1,0 +1,26 @@
+# Sobe um PostgreSQL para rodar a aplicacao com o profile "postgres".
+# Uso:
+#   docker compose up -d
+#   SPRING_PROFILES_ACTIVE=postgres ./mvnw spring-boot:run
+#
+# O profile default (H2 em arquivo) NAO precisa deste compose.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: assembleia-postgres
+    environment:
+      POSTGRES_DB: assembleia
+      POSTGRES_USER: assembleia
+      POSTGRES_PASSWORD: assembleia
+    ports:
+      - "5432:5432"
+    volumes:
+      - assembleia-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assembleia -d assembleia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  assembleia-pgdata:

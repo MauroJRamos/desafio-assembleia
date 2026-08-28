@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: assembleia
+
+  # Perfil padrao: H2 em arquivo. Persiste entre restarts (requisito do desafio)
+  # e nao exige nenhuma dependencia externa para o avaliador executar.
+  # Para usar PostgreSQL: SPRING_PROFILES_ACTIVE=postgres (ver docker-compose.yml).
+  datasource:
+    url: jdbc:h2:file:./data/assembleia;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      # Etapa inicial. Sera substituido por migrations versionadas (Flyway) em etapa dedicada.
+      ddl-auto: update
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+server:
+  port: 8080
+
+# Health check e metadados da aplicacao
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    description: API de gestao de sessoes de votacao em assembleias
+
+# Documentacao da API
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+# Configuracoes de negocio da aplicacao
+assembleia:
+  sessao:
+    # Duracao default de uma sessao de votacao quando nao informada na abertura.
+    duracao-padrao: 1m
+  integracao:
+    # Bonus 1 - servico externo de elegibilidade por CPF.
+    # Dominio parametrizavel via configuracao (dica do desafio).
+    user-info:
+      base-url: https://user-info.herokuapp.com
+      # Quando o servico externo estiver indisponivel, um stub local decide aleatoriamente.
+      fake: true
+      timeout: 3s
+
+logging:
+  level:
+    br.com.mauroramos.assembleia: INFO
+    org.hibernate.SQL: DEBUG

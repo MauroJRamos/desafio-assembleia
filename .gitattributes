@@ -1,0 +1,13 @@
+# Normaliza fim de linha: LF no repositorio para todos os arquivos de texto
+* text=auto eol=lf
+
+# Scripts que precisam de terminador especifico
+*.cmd text eol=crlf
+*.bat text eol=crlf
+mvnw text eol=lf
+
+# Arquivos binarios
+*.jar binary
+*.png binary
+*.jpg binary
+*.pdf binary
