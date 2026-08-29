@@ -3,6 +3,7 @@ package br.com.mauroramos.assembleia.pauta;
 import br.com.mauroramos.assembleia.common.config.SessaoProperties;
 import br.com.mauroramos.assembleia.common.error.ConflitoDeEstadoException;
 import br.com.mauroramos.assembleia.common.error.RecursoNaoEncontradoException;
+import br.com.mauroramos.assembleia.common.error.RegraDeNegocioException;
 import br.com.mauroramos.assembleia.pauta.dto.AbrirSessaoRequest;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
 import br.com.mauroramos.assembleia.sessao.StatusSessao;
@@ -56,6 +57,10 @@ public class PautaService {
         Duration duracao = (request != null && request.duracao() != null)
                 ? request.duracao()
                 : sessaoProperties.duracaoPadrao();
+
+        if (duracao.isNegative()) {
+            throw new RegraDeNegocioException("A duração da sessão não pode ser negativa.");
+        }
 
         Instant abertaEm = clock.instant();
         pauta.abrirSessao(abertaEm, abertaEm.plus(duracao));

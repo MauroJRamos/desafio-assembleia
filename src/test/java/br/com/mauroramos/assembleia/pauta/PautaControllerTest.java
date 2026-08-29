@@ -2,6 +2,7 @@ package br.com.mauroramos.assembleia.pauta;
 
 import br.com.mauroramos.assembleia.common.error.ConflitoDeEstadoException;
 import br.com.mauroramos.assembleia.common.error.RecursoNaoEncontradoException;
+import br.com.mauroramos.assembleia.common.error.RegraDeNegocioException;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
 import br.com.mauroramos.assembleia.sessao.StatusSessao;
 import br.com.mauroramos.assembleia.voto.Resultado;
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -20,6 +22,7 @@ import java.time.Instant;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -135,5 +138,54 @@ class PautaControllerTest {
 
         mockMvc.perform(get("/api/v1/pautas/99/resultado"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deveRetornar422QuandoRegraDeNegocioViolada() throws Exception {
+        when(pautaService.abrirSessao(eq(1L), any()))
+                .thenThrow(new RegraDeNegocioException("A duração da sessão não pode ser negativa."));
+
+        mockMvc.perform(post("/api/v1/pautas/1/sessao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"duracao\":\"-PT1M\"}"))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void deveRetornar409QuandoViolacaoDeIntegridade() throws Exception {
+        when(pautaService.cadastrar(any())).thenThrow(new DataIntegrityViolationException("duplicado"));
+
+        CriarPautaRequest request = new CriarPautaRequest("Título válido", "descrição");
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deveRetornar400QuandoCorpoMalFormado() throws Exception {
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ nao-e-json-valido"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deveRetornar405QuandoMetodoNaoSuportado() throws Exception {
+        mockMvc.perform(delete("/api/v1/pautas"))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
+    void deveRetornar500QuandoErroInesperado() throws Exception {
+        when(pautaService.cadastrar(any())).thenThrow(new IllegalStateException("falha inesperada"));
+
+        CriarPautaRequest request = new CriarPautaRequest("Título válido", "descrição");
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isInternalServerError());
     }
 }

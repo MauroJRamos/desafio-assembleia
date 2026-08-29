@@ -3,6 +3,7 @@ package br.com.mauroramos.assembleia.pauta;
 import br.com.mauroramos.assembleia.common.config.SessaoProperties;
 import br.com.mauroramos.assembleia.common.error.ConflitoDeEstadoException;
 import br.com.mauroramos.assembleia.common.error.RecursoNaoEncontradoException;
+import br.com.mauroramos.assembleia.common.error.RegraDeNegocioException;
 import br.com.mauroramos.assembleia.pauta.dto.AbrirSessaoRequest;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
 import br.com.mauroramos.assembleia.voto.OpcaoVoto;
@@ -96,6 +97,15 @@ class PautaServiceTest {
         Pauta atualizada = pautaService.abrirSessao(1L, null);
 
         assertThat(atualizada.getSessaoFechaEm()).isEqualTo(AGORA.plus(Duration.ofMinutes(1)));
+    }
+
+    @Test
+    void deveLancarRegraDeNegocioQuandoDuracaoNegativa() {
+        Pauta pauta = pautaPersistidaComId(1L);
+        when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
+
+        assertThatExceptionOfType(RegraDeNegocioException.class)
+                .isThrownBy(() -> pautaService.abrirSessao(1L, new AbrirSessaoRequest(Duration.ofMinutes(-1))));
     }
 
     @Test
