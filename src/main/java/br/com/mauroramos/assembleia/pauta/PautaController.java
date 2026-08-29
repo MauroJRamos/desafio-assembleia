@@ -4,9 +4,11 @@ import br.com.mauroramos.assembleia.pauta.dto.AbrirSessaoRequest;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
 import br.com.mauroramos.assembleia.pauta.dto.PautaResponse;
 import br.com.mauroramos.assembleia.pauta.dto.SessaoResponse;
+import br.com.mauroramos.assembleia.voto.dto.ResultadoVotacaoResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,5 +44,10 @@ public class PautaController {
             @RequestBody(required = false) AbrirSessaoRequest request) {
         Pauta pauta = pautaService.abrirSessao(id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(PautaMapper.toSessaoResponse(pauta));
+    }
+
+    @GetMapping("/{id}/resultado")
+    public ResponseEntity<ResultadoVotacaoResponse> apurar(@PathVariable Long id) {
+        return ResponseEntity.ok(pautaService.apurar(id));
     }
 }
