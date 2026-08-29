@@ -66,4 +66,13 @@ class VotoRepositoryTest {
 
         assertThat(votoNaOutraPauta.getId()).isNotNull();
     }
+
+    @Test
+    void existsByPautaIdAndAssociadoIdDeveRefletirVotoJaRegistrado() {
+        Pauta pauta = criarPautaPersistida();
+        votoRepository.saveAndFlush(new Voto(pauta, "12345678901", OpcaoVoto.SIM, Instant.now()));
+
+        assertThat(votoRepository.existsByPauta_IdAndAssociadoId(pauta.getId(), "12345678901")).isTrue();
+        assertThat(votoRepository.existsByPauta_IdAndAssociadoId(pauta.getId(), "00000000000")).isFalse();
+    }
 }
