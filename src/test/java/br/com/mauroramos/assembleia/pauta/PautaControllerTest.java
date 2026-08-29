@@ -3,6 +3,9 @@ package br.com.mauroramos.assembleia.pauta;
 import br.com.mauroramos.assembleia.common.error.ConflitoDeEstadoException;
 import br.com.mauroramos.assembleia.common.error.RecursoNaoEncontradoException;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
+import br.com.mauroramos.assembleia.sessao.StatusSessao;
+import br.com.mauroramos.assembleia.voto.Resultado;
+import br.com.mauroramos.assembleia.voto.dto.ResultadoVotacaoResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import java.time.Instant;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -108,5 +112,28 @@ class PautaControllerTest {
 
         mockMvc.perform(post("/api/v1/pautas/1/sessao"))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deveApurarResultadoERetornar200() throws Exception {
+        ResultadoVotacaoResponse resultado = new ResultadoVotacaoResponse(
+                1L, "Título", StatusSessao.FECHADA, 11, 8, 3,
+                Resultado.APROVADA, false, Instant.parse("2026-08-27T20:26:00Z"));
+        when(pautaService.apurar(1L)).thenReturn(resultado);
+
+        mockMvc.perform(get("/api/v1/pautas/1/resultado"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalVotos").value(11))
+                .andExpect(jsonPath("$.resultado").value("APROVADA"))
+                .andExpect(jsonPath("$.parcial").value(false));
+    }
+
+    @Test
+    void deveRetornar404QuandoPautaNaoExisteAoApurar() throws Exception {
+        when(pautaService.apurar(99L))
+                .thenThrow(new RecursoNaoEncontradoException("Pauta 99 não encontrada."));
+
+        mockMvc.perform(get("/api/v1/pautas/99/resultado"))
+                .andExpect(status().isNotFound());
     }
 }

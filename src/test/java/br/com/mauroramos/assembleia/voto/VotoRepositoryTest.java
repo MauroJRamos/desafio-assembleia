@@ -8,6 +8,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.Instant;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -74,5 +76,27 @@ class VotoRepositoryTest {
 
         assertThat(votoRepository.existsByPauta_IdAndAssociadoId(pauta.getId(), "12345678901")).isTrue();
         assertThat(votoRepository.existsByPauta_IdAndAssociadoId(pauta.getId(), "00000000000")).isFalse();
+    }
+
+    @Test
+    void contarPorOpcaoDeveAgruparVotosDaPauta() {
+        Pauta pauta = criarPautaPersistida();
+        votoRepository.saveAndFlush(new Voto(pauta, "111", OpcaoVoto.SIM, Instant.now()));
+        votoRepository.saveAndFlush(new Voto(pauta, "222", OpcaoVoto.SIM, Instant.now()));
+        votoRepository.saveAndFlush(new Voto(pauta, "333", OpcaoVoto.NAO, Instant.now()));
+
+        Map<OpcaoVoto, Long> contagem = votoRepository.contarPorOpcao(pauta.getId()).stream()
+                .collect(Collectors.toMap(VotoRepository.ContagemVoto::getOpcao, VotoRepository.ContagemVoto::getTotal));
+
+        assertThat(contagem).hasSize(2);
+        assertThat(contagem.get(OpcaoVoto.SIM)).isEqualTo(2L);
+        assertThat(contagem.get(OpcaoVoto.NAO)).isEqualTo(1L);
+    }
+
+    @Test
+    void contarPorOpcaoDeveVirVazioQuandoPautaSemVotos() {
+        Pauta pauta = criarPautaPersistida();
+
+        assertThat(votoRepository.contarPorOpcao(pauta.getId())).isEmpty();
     }
 }
