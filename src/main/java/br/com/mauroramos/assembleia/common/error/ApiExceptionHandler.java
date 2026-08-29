@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.net.URI;
 import java.util.List;
 
-// Cobre por enquanto só Bean Validation; catálogo de exceções de domínio entra na etapa 6.
+// Catálogo completo (DataIntegrityViolation, 500 genérico, etc.) entra na etapa 6.
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
@@ -24,6 +24,22 @@ public class ApiExceptionHandler {
                 .toList();
         problema.setProperty("errors", erros);
 
+        return problema;
+    }
+
+    @ExceptionHandler(RecursoNaoEncontradoException.class)
+    public ProblemDetail tratarNaoEncontrado(RecursoNaoEncontradoException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problema.setType(URI.create("https://assembleia/errors/recurso-nao-encontrado"));
+        problema.setTitle("Recurso não encontrado");
+        return problema;
+    }
+
+    @ExceptionHandler(ConflitoDeEstadoException.class)
+    public ProblemDetail tratarConflito(ConflitoDeEstadoException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problema.setType(URI.create("https://assembleia/errors/conflito-de-estado"));
+        problema.setTitle("Conflito de estado");
         return problema;
     }
 

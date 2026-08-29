@@ -2,6 +2,7 @@ package br.com.mauroramos.assembleia;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
  * Ponto de entrada da aplicacao.
@@ -11,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * adicionadas de forma incremental nas etapas seguintes &mdash; ver {@code docs/ANALISE-ARQUITETURA.md}.
  */
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class AssembleiaApplication {
 
     public static void main(String[] args) {
