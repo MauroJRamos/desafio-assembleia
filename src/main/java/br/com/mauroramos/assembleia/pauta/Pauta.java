@@ -66,6 +66,11 @@ public class Pauta {
         return sessaoFechaEm;
     }
 
+    public void abrirSessao(Instant abertaEm, Instant fechaEm) {
+        this.sessaoAbertaEm = abertaEm;
+        this.sessaoFechaEm = fechaEm;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

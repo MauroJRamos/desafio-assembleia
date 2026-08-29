@@ -1,5 +1,7 @@
 package br.com.mauroramos.assembleia.pauta;
 
+import br.com.mauroramos.assembleia.common.error.ConflitoDeEstadoException;
+import br.com.mauroramos.assembleia.common.error.RecursoNaoEncontradoException;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -73,5 +76,37 @@ class PautaControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].campo").value("descricao"));
+    }
+
+    @Test
+    void deveAbrirSessaoERetornar201ComStatusAberta() throws Exception {
+        Pauta pauta = new Pauta("Título", "descrição", Instant.parse("2026-08-27T20:15:00Z"));
+        ReflectionTestUtils.setField(pauta, "id", 1L);
+        pauta.abrirSessao(Instant.parse("2026-08-27T20:20:00Z"), Instant.parse("2026-08-27T20:21:00Z"));
+        when(pautaService.abrirSessao(eq(1L), any())).thenReturn(pauta);
+
+        mockMvc.perform(post("/api/v1/pautas/1/sessao"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.pautaId").value(1))
+                .andExpect(jsonPath("$.status").value("ABERTA"))
+                .andExpect(jsonPath("$.fechaEm").value("2026-08-27T20:21:00Z"));
+    }
+
+    @Test
+    void deveRetornar404QuandoPautaNaoExisteAoAbrirSessao() throws Exception {
+        when(pautaService.abrirSessao(eq(99L), any()))
+                .thenThrow(new RecursoNaoEncontradoException("Pauta 99 não encontrada."));
+
+        mockMvc.perform(post("/api/v1/pautas/99/sessao"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deveRetornar409QuandoSessaoJaFoiAberta() throws Exception {
+        when(pautaService.abrirSessao(eq(1L), any()))
+                .thenThrow(new ConflitoDeEstadoException("Sessão já aberta."));
+
+        mockMvc.perform(post("/api/v1/pautas/1/sessao"))
+                .andExpect(status().isConflict());
     }
 }
