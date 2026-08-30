@@ -99,4 +99,15 @@ class VotoServiceTest {
         assertThatExceptionOfType(ConflitoDeEstadoException.class)
                 .isThrownBy(() -> votoService.registrar(1L, new RegistrarVotoRequest("12345678901", OpcaoVoto.NAO)));
     }
+
+    @Test
+    void mascararDeveEsconderMeioDoIdentificadorMantendoInicioEFim() {
+        assertThat(VotoService.mascarar("12345678901")).isEqualTo("123******01");
+    }
+
+    @Test
+    void mascararDeveOcultarPorCompletoIdentificadorCurto() {
+        assertThat(VotoService.mascarar("123")).isEqualTo("***");
+        assertThat(VotoService.mascarar(null)).isEqualTo("***");
+    }
 }
