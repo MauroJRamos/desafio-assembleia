@@ -52,6 +52,8 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(ConflitoDeEstadoException.class)
     public ProblemDetail tratarConflito(ConflitoDeEstadoException ex) {
+        log.warn("Conflito de estado: {}", ex.getMessage());
+
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problema.setType(URI.create("https://assembleia/errors/conflito-de-estado"));
         problema.setTitle("Conflito de estado");
@@ -60,6 +62,8 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(RegraDeNegocioException.class)
     public ProblemDetail tratarRegraDeNegocio(RegraDeNegocioException ex) {
+        log.warn("Regra de negócio violada: {}", ex.getMessage());
+
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
         problema.setType(URI.create("https://assembleia/errors/regra-de-negocio"));
         problema.setTitle("Violação de regra de negócio");

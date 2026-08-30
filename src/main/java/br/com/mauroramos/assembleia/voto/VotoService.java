@@ -6,6 +6,8 @@ import br.com.mauroramos.assembleia.pauta.Pauta;
 import br.com.mauroramos.assembleia.pauta.PautaRepository;
 import br.com.mauroramos.assembleia.sessao.StatusSessao;
 import br.com.mauroramos.assembleia.voto.dto.RegistrarVotoRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,8 @@ import java.time.Clock;
 
 @Service
 public class VotoService {
+
+    private static final Logger log = LoggerFactory.getLogger(VotoService.class);
 
     private final VotoRepository votoRepository;
     private final PautaRepository pautaRepository;
@@ -44,6 +48,19 @@ public class VotoService {
         }
 
         Voto voto = VotoMapper.toEntity(pauta, request, clock.instant());
-        return votoRepository.save(voto);
+        voto = votoRepository.save(voto);
+        log.info("Voto registrado: pautaId={}, associadoId={}, opcao={}",
+                pautaId, mascarar(request.associadoId()), request.voto());
+        return voto;
+    }
+
+    // Nunca loga o associadoId por inteiro (LGPD, §10); package-private só pra ser testável.
+    static String mascarar(String associadoId) {
+        if (associadoId == null || associadoId.length() <= 5) {
+            return "***";
+        }
+        int visiveis = 3;
+        return associadoId.substring(0, visiveis) + "*".repeat(associadoId.length() - visiveis - 2)
+                + associadoId.substring(associadoId.length() - 2);
     }
 }

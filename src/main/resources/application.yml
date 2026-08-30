@@ -74,3 +74,6 @@ logging:
   level:
     br.com.mauroramos.assembleia: INFO
     org.hibernate.SQL: DEBUG
+  pattern:
+    # correlationId (MDC, ver CorrelationIdFilter) em toda linha de log da aplicacao.
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{correlationId}] %logger{36} - %msg%n"

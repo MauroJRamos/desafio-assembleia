@@ -11,6 +11,8 @@ import br.com.mauroramos.assembleia.voto.OpcaoVoto;
 import br.com.mauroramos.assembleia.voto.Resultado;
 import br.com.mauroramos.assembleia.voto.VotoRepository;
 import br.com.mauroramos.assembleia.voto.dto.ResultadoVotacaoResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class PautaService {
+
+    private static final Logger log = LoggerFactory.getLogger(PautaService.class);
 
     private final PautaRepository pautaRepository;
     private final VotoRepository votoRepository;
@@ -42,7 +46,9 @@ public class PautaService {
     @Transactional
     public Pauta cadastrar(CriarPautaRequest request) {
         Pauta pauta = PautaMapper.toEntity(request, clock.instant());
-        return pautaRepository.save(pauta);
+        pauta = pautaRepository.save(pauta);
+        log.info("Pauta cadastrada: id={}", pauta.getId());
+        return pauta;
     }
 
     @Transactional
@@ -63,7 +69,9 @@ public class PautaService {
         }
 
         Instant abertaEm = clock.instant();
-        pauta.abrirSessao(abertaEm, abertaEm.plus(duracao));
+        Instant fechaEm = abertaEm.plus(duracao);
+        pauta.abrirSessao(abertaEm, fechaEm);
+        log.info("Sessão aberta: pautaId={}, fechaEm={}", pautaId, fechaEm);
 
         return pauta;
     }
@@ -81,6 +89,9 @@ public class PautaService {
         Instant agora = clock.instant();
         StatusSessao status = StatusSessao.derivar(pauta.getSessaoAbertaEm(), pauta.getSessaoFechaEm(), agora);
 
+        Resultado resultado = Resultado.apurar(votosSim, votosNao);
+        log.info("Resultado apurado: pautaId={}, status={}, resultado={}", pautaId, status, resultado);
+
         return new ResultadoVotacaoResponse(
                 pauta.getId(),
                 pauta.getTitulo(),
@@ -88,7 +99,7 @@ public class PautaService {
                 votosSim + votosNao,
                 votosSim,
                 votosNao,
-                Resultado.apurar(votosSim, votosNao),
+                resultado,
                 status != StatusSessao.FECHADA,
                 agora);
     }
