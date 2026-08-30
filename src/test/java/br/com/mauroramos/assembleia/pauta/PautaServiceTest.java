@@ -176,4 +176,23 @@ class PautaServiceTest {
         assertThatExceptionOfType(RecursoNaoEncontradoException.class)
                 .isThrownBy(() -> pautaService.apurar(99L));
     }
+
+    @Test
+    void deveMontarTelaDeVotacaoParaPautaExistente() {
+        Pauta pauta = pautaPersistidaComId(1L);
+        when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
+
+        var tela = pautaService.telaVotacao(1L);
+
+        assertThat(tela.titulo()).isEqualTo("Titulo");
+        assertThat(tela.botoes()).hasSize(2);
+    }
+
+    @Test
+    void deveLancarNaoEncontradoAoMontarTelaDePautaInexistente() {
+        when(pautaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(RecursoNaoEncontradoException.class)
+                .isThrownBy(() -> pautaService.telaVotacao(99L));
+    }
 }
