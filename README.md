@@ -81,3 +81,11 @@ Chaves relevantes (`src/main/resources/application.yml`), todas sobrescrevíveis
 
 ---
 
+## Decisões de arquitetura
+
+Estratégia de versionamento da API e os principais ADRs (Request/Response DTO, estado de
+sessão derivado, unicidade de voto, tratamento de erros, apuração agregada, integração de
+elegibilidade) estão documentados em [`docs/DECISOES-ARQUITETURA.md`](docs/DECISOES-ARQUITETURA.md).
+
+---
+
