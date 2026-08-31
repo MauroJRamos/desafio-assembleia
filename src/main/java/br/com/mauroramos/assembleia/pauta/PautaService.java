@@ -7,6 +7,7 @@ import br.com.mauroramos.assembleia.common.error.RegraDeNegocioException;
 import br.com.mauroramos.assembleia.pauta.dto.AbrirSessaoRequest;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
 import br.com.mauroramos.assembleia.sessao.StatusSessao;
+import br.com.mauroramos.assembleia.tela.TelaResponse;
 import br.com.mauroramos.assembleia.voto.OpcaoVoto;
 import br.com.mauroramos.assembleia.voto.Resultado;
 import br.com.mauroramos.assembleia.voto.VotoRepository;
@@ -53,8 +54,7 @@ public class PautaService {
 
     @Transactional
     public Pauta abrirSessao(Long pautaId, AbrirSessaoRequest request) {
-        Pauta pauta = pautaRepository.findById(pautaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Pauta " + pautaId + " não encontrada."));
+        Pauta pauta = buscarPautaOuFalhar(pautaId);
 
         if (pauta.getSessaoAbertaEm() != null) {
             throw new ConflitoDeEstadoException("Sessão da pauta " + pautaId + " já foi aberta anteriormente.");
@@ -78,8 +78,7 @@ public class PautaService {
 
     @Transactional(readOnly = true)
     public ResultadoVotacaoResponse apurar(Long pautaId) {
-        Pauta pauta = pautaRepository.findById(pautaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Pauta " + pautaId + " não encontrada."));
+        Pauta pauta = buscarPautaOuFalhar(pautaId);
 
         Map<OpcaoVoto, Long> contagem = votoRepository.contarPorOpcao(pautaId).stream()
                 .collect(Collectors.toMap(VotoRepository.ContagemVoto::getOpcao, VotoRepository.ContagemVoto::getTotal));
@@ -102,5 +101,15 @@ public class PautaService {
                 resultado,
                 status != StatusSessao.FECHADA,
                 agora);
+    }
+
+    @Transactional(readOnly = true)
+    public TelaResponse telaVotacao(Long pautaId) {
+        return PautaMapper.toTelaVotacao(buscarPautaOuFalhar(pautaId));
+    }
+
+    private Pauta buscarPautaOuFalhar(Long pautaId) {
+        return pautaRepository.findById(pautaId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Pauta " + pautaId + " não encontrada."));
     }
 }

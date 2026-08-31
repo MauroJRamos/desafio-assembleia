@@ -4,6 +4,7 @@ import br.com.mauroramos.assembleia.pauta.dto.AbrirSessaoRequest;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
 import br.com.mauroramos.assembleia.pauta.dto.PautaResponse;
 import br.com.mauroramos.assembleia.pauta.dto.SessaoResponse;
+import br.com.mauroramos.assembleia.tela.TelaResponse;
 import br.com.mauroramos.assembleia.voto.dto.ResultadoVotacaoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,5 +58,13 @@ public class PautaController {
             description = "Disponível em qualquer estado da sessão; parcial=true enquanto a sessão não fechou.")
     public ResponseEntity<ResultadoVotacaoResponse> apurar(@PathVariable Long id) {
         return ResponseEntity.ok(pautaService.apurar(id));
+    }
+
+    @GetMapping("/{id}/tela-votacao")
+    @Operation(summary = "PoC de tela server-driven (Anexo 1)",
+            description = "Descreve a tela de votação no formato FORMULARIO do Anexo 1, "
+                    + "para um cliente mobile hipotético renderizar e disparar o voto.")
+    public ResponseEntity<TelaResponse> telaVotacao(@PathVariable Long id) {
+        return ResponseEntity.ok(pautaService.telaVotacao(id));
     }
 }

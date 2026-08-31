@@ -5,6 +5,10 @@ import br.com.mauroramos.assembleia.common.error.RecursoNaoEncontradoException;
 import br.com.mauroramos.assembleia.common.error.RegraDeNegocioException;
 import br.com.mauroramos.assembleia.pauta.dto.CriarPautaRequest;
 import br.com.mauroramos.assembleia.sessao.StatusSessao;
+import br.com.mauroramos.assembleia.tela.BotaoTela;
+import br.com.mauroramos.assembleia.tela.ItemTela;
+import br.com.mauroramos.assembleia.tela.TelaResponse;
+import br.com.mauroramos.assembleia.tela.TipoTela;
 import br.com.mauroramos.assembleia.voto.Resultado;
 import br.com.mauroramos.assembleia.voto.dto.ResultadoVotacaoResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +22,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -187,5 +193,32 @@ class PautaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void deveRetornarTelaDeVotacaoERetornar200() throws Exception {
+        TelaResponse tela = new TelaResponse(
+                TipoTela.FORMULARIO,
+                "Título",
+                List.of(ItemTela.texto("descrição"), ItemTela.inputTexto("Identificação", "associadoId")),
+                List.of(
+                        new BotaoTela("Sim", "/api/v1/pautas/1/votos", Map.of("voto", "SIM")),
+                        new BotaoTela("Não", "/api/v1/pautas/1/votos", Map.of("voto", "NAO"))));
+        when(pautaService.telaVotacao(1L)).thenReturn(tela);
+
+        mockMvc.perform(get("/api/v1/pautas/1/tela-votacao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipo").value("FORMULARIO"))
+                .andExpect(jsonPath("$.botoes[0].url").value("/api/v1/pautas/1/votos"))
+                .andExpect(jsonPath("$.botoes[0].body.voto").value("SIM"));
+    }
+
+    @Test
+    void deveRetornar404QuandoPautaNaoExisteAoBuscarTelaDeVotacao() throws Exception {
+        when(pautaService.telaVotacao(99L))
+                .thenThrow(new RecursoNaoEncontradoException("Pauta 99 não encontrada."));
+
+        mockMvc.perform(get("/api/v1/pautas/99/tela-votacao"))
+                .andExpect(status().isNotFound());
     }
 }
