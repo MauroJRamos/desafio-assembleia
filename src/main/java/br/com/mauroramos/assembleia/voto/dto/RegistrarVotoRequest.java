@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record RegistrarVotoRequest(
 
-        @Schema(description = "Identificador do associado que está votando", example = "12345678901")
+        @Schema(description = "CPF do associado que está votando, também usado na consulta de elegibilidade", example = "12345678901")
         @NotBlank(message = "associadoId é obrigatório")
         String associadoId,
 

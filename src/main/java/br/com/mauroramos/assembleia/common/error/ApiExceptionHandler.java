@@ -81,6 +81,26 @@ public class ApiExceptionHandler {
         return problema;
     }
 
+    @ExceptionHandler(AssociadoNaoHabilitadoException.class)
+    public ProblemDetail tratarAssociadoNaoHabilitado(AssociadoNaoHabilitadoException ex) {
+        log.warn("Associado não habilitado a votar: {}", ex.getMessage());
+
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problema.setType(URI.create("https://assembleia/errors/associado-nao-habilitado"));
+        problema.setTitle("Associado não habilitado a votar");
+        return problema;
+    }
+
+    @ExceptionHandler(IntegracaoIndisponivelException.class)
+    public ProblemDetail tratarIntegracaoIndisponivel(IntegracaoIndisponivelException ex) {
+        log.error("Integração externa indisponível: {}", ex.getMessage());
+
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        problema.setType(URI.create("https://assembleia/errors/integracao-indisponivel"));
+        problema.setTitle("Serviço externo indisponível");
+        return problema;
+    }
+
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ProblemDetail tratarMetodoNaoSuportado(HttpRequestMethodNotSupportedException ex) {
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage());

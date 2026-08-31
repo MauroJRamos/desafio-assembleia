@@ -1,7 +1,10 @@
 package br.com.mauroramos.assembleia.voto;
 
+import br.com.mauroramos.assembleia.common.error.AssociadoNaoHabilitadoException;
 import br.com.mauroramos.assembleia.common.error.ConflitoDeEstadoException;
 import br.com.mauroramos.assembleia.common.error.RecursoNaoEncontradoException;
+import br.com.mauroramos.assembleia.integracao.userinfo.StatusElegibilidade;
+import br.com.mauroramos.assembleia.integracao.userinfo.UserInfoClient;
 import br.com.mauroramos.assembleia.pauta.Pauta;
 import br.com.mauroramos.assembleia.pauta.PautaRepository;
 import br.com.mauroramos.assembleia.voto.dto.RegistrarVotoRequest;
@@ -20,6 +23,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,12 +37,15 @@ class VotoServiceTest {
     @Mock
     private PautaRepository pautaRepository;
 
+    @Mock
+    private UserInfoClient userInfoClient;
+
     private VotoService votoService;
 
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(AGORA, ZoneOffset.UTC);
-        votoService = new VotoService(votoRepository, pautaRepository, clock);
+        votoService = new VotoService(votoRepository, pautaRepository, userInfoClient, clock);
     }
 
     private Pauta pautaComId(long id) {
@@ -53,6 +60,7 @@ class VotoServiceTest {
         pauta.abrirSessao(AGORA.minusSeconds(60), AGORA.plusSeconds(60));
         when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
         when(votoRepository.existsByPauta_IdAndAssociadoId(1L, "12345678901")).thenReturn(false);
+        when(userInfoClient.consultar("12345678901")).thenReturn(StatusElegibilidade.ABLE_TO_VOTE);
         when(votoRepository.save(any())).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Voto voto = votoService.registrar(1L, new RegistrarVotoRequest("12345678901", OpcaoVoto.SIM));
@@ -98,6 +106,31 @@ class VotoServiceTest {
 
         assertThatExceptionOfType(ConflitoDeEstadoException.class)
                 .isThrownBy(() -> votoService.registrar(1L, new RegistrarVotoRequest("12345678901", OpcaoVoto.NAO)));
+    }
+
+    @Test
+    void deveLancarNaoHabilitadoQuandoElegibilidadeNegada() {
+        Pauta pauta = pautaComId(1L);
+        pauta.abrirSessao(AGORA.minusSeconds(60), AGORA.plusSeconds(60));
+        when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
+        when(votoRepository.existsByPauta_IdAndAssociadoId(1L, "12345678901")).thenReturn(false);
+        when(userInfoClient.consultar("12345678901")).thenReturn(StatusElegibilidade.UNABLE_TO_VOTE);
+
+        assertThatExceptionOfType(AssociadoNaoHabilitadoException.class)
+                .isThrownBy(() -> votoService.registrar(1L, new RegistrarVotoRequest("12345678901", OpcaoVoto.SIM)));
+    }
+
+    @Test
+    void naoDeveConsultarElegibilidadeQuandoAssociadoJaVotou() {
+        Pauta pauta = pautaComId(1L);
+        pauta.abrirSessao(AGORA.minusSeconds(60), AGORA.plusSeconds(60));
+        when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
+        when(votoRepository.existsByPauta_IdAndAssociadoId(1L, "12345678901")).thenReturn(true);
+
+        assertThatExceptionOfType(ConflitoDeEstadoException.class)
+                .isThrownBy(() -> votoService.registrar(1L, new RegistrarVotoRequest("12345678901", OpcaoVoto.SIM)));
+
+        verifyNoInteractions(userInfoClient);
     }
 
     @Test
