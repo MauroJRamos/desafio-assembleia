@@ -26,7 +26,8 @@ public class VotoController {
 
     @PostMapping
     @Operation(summary = "Registra o voto de um associado",
-            description = "Único voto por associado por pauta; a sessão precisa estar aberta.")
+            description = "Único voto por associado por pauta; a sessão precisa estar aberta; "
+                    + "o CPF precisa estar habilitado a votar (consulta de elegibilidade externa).")
     public ResponseEntity<VotoResponse> registrar(
             @PathVariable Long pautaId,
             @Valid @RequestBody RegistrarVotoRequest request) {

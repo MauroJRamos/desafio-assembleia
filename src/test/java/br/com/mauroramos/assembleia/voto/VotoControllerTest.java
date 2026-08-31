@@ -1,6 +1,8 @@
 package br.com.mauroramos.assembleia.voto;
 
+import br.com.mauroramos.assembleia.common.error.AssociadoNaoHabilitadoException;
 import br.com.mauroramos.assembleia.common.error.ConflitoDeEstadoException;
+import br.com.mauroramos.assembleia.common.error.IntegracaoIndisponivelException;
 import br.com.mauroramos.assembleia.common.error.RecursoNaoEncontradoException;
 import br.com.mauroramos.assembleia.pauta.Pauta;
 import br.com.mauroramos.assembleia.voto.dto.RegistrarVotoRequest;
@@ -92,5 +94,31 @@ class VotoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deveRetornar403QuandoAssociadoNaoHabilitado() throws Exception {
+        when(votoService.registrar(eq(1L), any()))
+                .thenThrow(new AssociadoNaoHabilitadoException("Associado não habilitado a votar."));
+
+        RegistrarVotoRequest request = new RegistrarVotoRequest("12345678901", OpcaoVoto.SIM);
+
+        mockMvc.perform(post("/api/v1/pautas/1/votos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deveRetornar503QuandoIntegracaoIndisponivel() throws Exception {
+        when(votoService.registrar(eq(1L), any()))
+                .thenThrow(new IntegracaoIndisponivelException("Serviço de elegibilidade indisponível."));
+
+        RegistrarVotoRequest request = new RegistrarVotoRequest("12345678901", OpcaoVoto.SIM);
+
+        mockMvc.perform(post("/api/v1/pautas/1/votos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isServiceUnavailable());
     }
 }
